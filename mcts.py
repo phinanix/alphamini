@@ -21,8 +21,19 @@ class SNode():
     def expand(self, network):
         pass
 
-    def expanded(self):
+    def is_expanded(self):
         return self.visits!=0
+
+    def best_child(self):
+        best = self.actions[0]
+        for child in self.actions[1:]:
+            if child.value() > best.value:
+                best = child
+        return best
+
+    def vist(self):
+        self.visits += 1
+        return self.best_child()
 
 class AEdge():
     '''represents a possible action in a state
@@ -58,7 +69,11 @@ class AEdge():
 
     
 def select(state):
-    pass
+    current = state
+    while not current.is_expanded():
+        action = current.visit()
+        current = action.visit()
+    return current
 
 def backup(state):
     pass
