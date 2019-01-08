@@ -158,8 +158,16 @@ class GoGame():
     prints an error message if False is returned, no message if True
     returns True if sucessful, False if unsuccessful
     error parameter controls verbosity
+
+    (-1, -1) is a pass, which is always legal and does not change the board state
     '''
     def move(self, x, y, error=False):
+        if x == -1 and y == -1:
+            self.cur_player = (self.cur_player + 1) % 2
+            self.turn += 1
+            #success!
+            return True
+            
         #check legality
         if not self.is_legal(self.board,x,y,self.cur_player,error=error):
             return False

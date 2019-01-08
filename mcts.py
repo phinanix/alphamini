@@ -123,14 +123,26 @@ def pick_move(root, temp):
     move_array = np.zeros( (size,size) )
     for action in root.actions:
         x,y = action.move
-        move_array[x,y] = action.visits
-    if temp != 0:
-        temps = np.power(move_array, 1/temp)
-    else:
+        if x==-1 and y==-1:
+            pass_count = action.visits
+        else:
+            move_array[x,y] = action.visits
+    if temp == 0:
+        max_val = max(pass_count, move_array.max())
         temps = np.zeros_like(move_array)
-        temps[np.where(move_array == move_array.max())] = 1
-    probs = np.divide(temps, temps.sum())
-    1d_probs = np.ravel(probs)
-    choice = np.random.choice(np.arrange(size**2), p=1d_probs)
+        if pass_count >= max_val:
+            pass_count = 1
+        temps[np.where(move_array == max_val)] = 1
+    else:
+        temps = np.power(move_array, 1/temp)
+        pass_count = pass_count**(1/temp)
+    probs = np.divide(temps, temps.sum()+pass_count)
+    pass_count = pass_count / temps.sum()+pass_count
+    1d_probs = np.zeros( probs.size+1 )
+    1d_probs[1:] = np.ravel(probs)
+    1d_probs[0] = pass_count
+    choice = np.random.choice(np.arrange(size**2+1), p=1d_probs)
+    if choice == 0:
+        return (-1,-1) #decided to pass
     return np.unravel_index(choice, temps.shape)
     
