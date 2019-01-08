@@ -17,7 +17,7 @@ class GoGame():
     black is player 0, white player 1
     '''
     def __init__(self, size, hist_size, komi):
-        self.hist_size = min(hist_size, 3) #for ko
+        self.hist_size = max(hist_size, 3) #for ko
         self.size = size
         self.board = np.zeros((size, size, hist_size*2))
         self.cur_player = 0 #black first
@@ -114,7 +114,10 @@ class GoGame():
     '''takes a board, a past board and a move 
     returns whether that move is ko, ie whether it recreates the past board
     '''
-    def __is_ko(self, board, old_board, x, y, color):
+    def __is_ko(self, board, old_board, x, y, color, verbose=False):
+        if verbose:
+            print("board:\n", self.__print_board(board))
+            print("old_board:\n", self.__print_board(old_board))
         final_board = self.__update(board, x, y, color)
         return np.array_equal(final_board, old_board)
         #if they're equal, it's an illegal ko move
@@ -138,8 +141,9 @@ class GoGame():
             return False
         #check ko
         if self.__is_ko(self.board[:,:,:2],
-                        self.board[:,:,4:6],
-                        x,y, self.cur_player):
+                        self.board[:,:,2:4],
+                        x,y, color,
+                        verbose=False):
             if error:
                 print('move is ko')
             return False
@@ -172,6 +176,11 @@ class GoGame():
         #success!
         return True
 
+    def interactive_move(self, x, y):
+        if self.move(x,y,error=True):
+            print('New Board:')
+            print(self.get_board_str)
+ 
     '''returns an array with 1s at legal moves and 0s at illegal moves'''
     def legal_moves(self, color):
         out = np.zeros((self.size, self.size))
@@ -197,20 +206,26 @@ class GoGame():
         
     def get_board_str(self):
            return self.__print_board(self.board)
+    def get_history_str(self):
+        out = []
+        for i in range(0, self.hist_size*2, 2):
+            out.append(self.__print_board(self.board[:,:,i:i+2]))
+        return '\n'.join(out)
 
         
 game = GoGame(3, 3, 4.5)
 print(game.get_board_str())
-game.move(1,1, error=True)
+game.move(1,1)
+print(game.get_board_str())
+game.move(1,2)
+print(game.get_board_str())
+game.move(2,2)
+print(game.get_board_str())
+game.move(0,1)
+print(game.get_board_str())
+game.move(0,2)
 print(game.get_board_str())
 game.move(1,2, error=True)
 print(game.get_board_str())
-game.move(2,2, error=True)
-print(game.get_board_str())
-game.move(0,1, error=True)
-print(game.get_board_str())
-game.move(0,2, error=True)
-print(game.get_board_str())
-#game.move(1,2, error=True))
-#print(game.get_board_str())
-print(game.legal_moves(0))
+print(game.legal_moves(1))
+#print(game.get_history_str())
