@@ -18,13 +18,19 @@ class GoGame():
     def __init__(self, size, hist_size, komi):
         self.hist_size = max(hist_size, 3) #for ko
         self.size = size
+        self.komi = komi
         self.board = np.zeros((size, size, hist_size*2))
         self.cur_player = 0 #black first
-        self.komi = komi
         self.turn = 0
 
-
+    '''returns a deep/true copy of the class
     '''
+    def copy(self):
+        out = GoGame(self.size, self.hist_size, self.komi)
+        out.board = np.copy(self.board)
+        out.cur_player = self.cur_player
+        out.turn = self.turn
+    '''returns whether a board position is in bounds of the board
     '''
     def __in_bounds(self, i, j):
         return i >= 0 and j >= 0 and i < self.size and j < self.size
@@ -192,6 +198,10 @@ class GoGame():
                 if self.is_legal(self.board[:,:,:2],i,j,color):
                     out[i,j] = 1
         return out
+
+    '''returns the current score if the game were to immediately end'''
+    def score(self):
+        pass
 
     def __print_board(self, board):
         out = []
