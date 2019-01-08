@@ -98,14 +98,39 @@ def backup(state):
     while current.parent.parent:
         current = current.parent.parent
         current.update(value)
-
-def search(state, network, playouts=100):
     #expand root
-    for _ in range(playouts):
-        #select next node
-        #expand node
-        #backup node
-        pass
 
-def pick_move(tree):
-    pass
+'''
+runs a specified number of playouts 
+starting from a given root and network
+returns the evaluated root
+'''
+def search(root, network, playouts=100):
+    for _ in range(playouts):
+        leaf = select(root)
+        leaf.expand()
+        backup(leaf)
+    return root
+
+'''
+picks a move with some randomness given the root of a search tree
+temperature determines randomness, temp=0 picks the best move, while
+progressivly higher temperatures increas the probability of picking worse
+moves
+'''
+def pick_move(root, temp):
+    size = root.state.size
+    move_array = np.zeros( (size,size) )
+    for action in root.actions:
+        x,y = action.move
+        move_array[x,y] = action.visits
+    if temp != 0:
+        temps = np.power(move_array, 1/temp)
+    else:
+        temps = np.zeros_like(move_array)
+        temps[np.where(move_array == move_array.max())] = 1
+    probs = np.divide(temps, temps.sum())
+    1d_probs = np.ravel(probs)
+    choice = np.random.choice(np.arrange(size**2), p=1d_probs)
+    return np.unravel_index(choice, temps.shape)
+    
