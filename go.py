@@ -1,5 +1,4 @@
 import numpy as np
-import keras
 
 '''
 design decisions:
@@ -176,11 +175,15 @@ class GoGame():
         #success!
         return True
 
-    def interactive_move(self, x, y):
+    def i_move(self, x, y):
         if self.move(x,y,error=True):
             print('New Board:')
             print(self.get_board_str)
- 
+
+    def play_moves(self, move_list, error=False):
+        for x,y in move_list:
+            self.move(x,y, error=error)
+
     '''returns an array with 1s at legal moves and 0s at illegal moves'''
     def legal_moves(self, color):
         out = np.zeros((self.size, self.size))
@@ -211,21 +214,3 @@ class GoGame():
         for i in range(0, self.hist_size*2, 2):
             out.append(self.__print_board(self.board[:,:,i:i+2]))
         return '\n'.join(out)
-
-        
-game = GoGame(3, 3, 4.5)
-print(game.get_board_str())
-game.move(1,1)
-print(game.get_board_str())
-game.move(1,2)
-print(game.get_board_str())
-game.move(2,2)
-print(game.get_board_str())
-game.move(0,1)
-print(game.get_board_str())
-game.move(0,2)
-print(game.get_board_str())
-game.move(1,2, error=True)
-print(game.get_board_str())
-print(game.legal_moves(1))
-#print(game.get_history_str())
