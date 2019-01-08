@@ -7,7 +7,7 @@ class SNode():
     stores:
     -a visit count 
     -a set of edges that correspond to all possible actions one can take
-    -a parent action
+    -a parent action (root's parent is None)
     '''
     def __init__(self, state, parent):
         self.state = state
@@ -19,8 +19,13 @@ class SNode():
         self.valuation = None
 
     def expand(self, network):
-        pass
-
+        self.visits = 1
+        #feed my state to the network
+        #label self valuation
+        #generate children
+        #label children with priors
+        return self.valuation
+        
     def is_expanded(self):
         return self.visits!=0
 
@@ -67,16 +72,32 @@ class AEdge():
         self.visits += 1
         return self.result
 
-    
+    def update(self, child_value):
+        self.subtree_value += child_value
+        self.action_value = self.subtree_value / self.visits
+
+'''traverses the tree starting at state to determine next node
+to expand
+current is the current state in the tree
+'''
 def select(state):
-    current = state
+    current = state 
     while not current.is_expanded():
         action = current.visit()
         current = action.visit()
     return current
 
+'''backs up the tree, starting at state, which is a node just evaluated
+to update the tree above state with it's newly calculated value
+current is the current action we're updating
+'''
 def backup(state):
-    pass
+    value = state.valuation
+    current = state.parent
+    current.update(value)
+    while current.parent.parent:
+        current = current.parent.parent
+        current.update(value)
 
 def search(state, network, playouts=100):
     #expand root
