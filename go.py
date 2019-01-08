@@ -79,12 +79,13 @@ class GoGame():
     '''takes a size x size x 2 array representing a board and a color
     returns the board with all stones of that color captured
     '''
-    def __capture(self, board, color):
+    def __capture(self, board, color, verbose=False):
         new_board = np.copy(board)
         for i in range(self.size):
             for j in range(self.size):
                 if self.__liberties(new_board,i,j, color) == 0:
-                    print("capture was made")
+                    if verbose:
+                        print("capturing group at:", i, j, "color:", color)
                     for point in self.__group(new_board, i, j, color):
                         x = point[0]
                         y = point[1]
@@ -131,7 +132,7 @@ class GoGame():
                 print('move is on a stone already played')
             return False
         #check suicide
-        if self.__self_capture(self.board[:,:,:2], x,y, self.cur_player):
+        if self.__self_capture(self.board[:,:,:2], x,y, color):
             if error:
                 print('move is suicidal')
             return False
@@ -151,7 +152,7 @@ class GoGame():
     '''
     def move(self, x, y, error=False):
         #check legality
-        if not self.is_legal(self.board,x,y,self.cur_player,error):
+        if not self.is_legal(self.board,x,y,self.cur_player,error=error):
             return False
         #update history
         self.board[:,:,2:] = self.board[:,:,:-2]
@@ -161,8 +162,10 @@ class GoGame():
         self.board[x,y,self.cur_player] = 1
         #print(self.board)
         #clear captures
-        self.board[:,:,:2] = self.__capture(self.board[:,:,:2],(self.cur_player+1)%2)
-        self.board[:,:,:2] = self.__capture(self.board[:,:,:2],self.cur_player)
+        self.board[:,:,:2] = self.__capture(self.board[:,:,:2],
+                                            (self.cur_player+1)%2)
+        self.board[:,:,:2] = self.__capture(self.board[:,:,:2],
+                                            self.cur_player)
         #update turn and player
         self.cur_player = (self.cur_player + 1) % 2
         self.turn += 1
@@ -194,6 +197,7 @@ class GoGame():
         
     def get_board_str(self):
            return self.__print_board(self.board)
+
         
 game = GoGame(3, 3, 4.5)
 print(game.get_board_str())
@@ -201,9 +205,12 @@ game.move(1,1, error=True)
 print(game.get_board_str())
 game.move(1,2, error=True)
 print(game.get_board_str())
-game.move(0,2, error=True)
-print(game.get_board_str())
-game.move(0,0, error=True)
-print(game.get_board_str())
 game.move(2,2, error=True)
 print(game.get_board_str())
+game.move(0,1, error=True)
+print(game.get_board_str())
+game.move(0,2, error=True)
+print(game.get_board_str())
+#game.move(1,2, error=True))
+#print(game.get_board_str())
+print(game.legal_moves(0))
