@@ -22,6 +22,7 @@ class GoGame():
         self.board = np.zeros((size, size, hist_size*2))
         self.cur_player = 0 #black first
         self.turn = 0
+        self.pass_count = 0
 
     '''returns a deep/true copy of the class
     '''
@@ -43,13 +44,26 @@ class GoGame():
             if self.__in_bounds(x,y):
                 out.append( (x,y) )
         return out
-    
+
+    '''takes a board, an intersection, and a color
+    returns true if there is a stone of that color at that position
+    or if color is -1, whether that intersection is empty 
+    '''
+    def __check_square(self, board, i, j, color):
+        if color == -1:
+            #check if square is empty
+            return board[i,j,0]==0 and board[i,j,1]==0
+        else:
+            #check if square contains the given color
+            return board[i,j,color] == 1
+        
     '''takes a board, an intersection, and a color
     returns a list of tuples of intersections containing all squares that 
     stone is connected to
+    if color = -1, does the same, but for empty squares
     '''
     def __group(self, board, i, j, color):
-        if board[i,j,color]==0:
+        if not self.__check_square(board, i, j, color):
             return []
         out = [(i,j)]
         s = self.__neighbors(i,j)
@@ -58,7 +72,7 @@ class GoGame():
         while s:
             x,y = s.pop()
             visited.add( (x,y) )
-            if board[x,y,color] == 1:
+            if self.__check_square(board, i, j, color):
                 out.append( (x,y) )
                 s.extend([x for x in self.__neighbors(x,y) if x not in visited])
         return out
@@ -161,10 +175,18 @@ class GoGame():
 
     (-1, -1) is a pass, which is always legal and does not change the board state
     '''
-    def move(self, x, y, error=False):
+    def move(self, x, y, error=False, score_callback=None):
         if x == -1 and y == -1:
+            #this is a pass
             self.cur_player = (self.cur_player + 1) % 2
             self.turn += 1
+            self.pass_count += 1
+            if self.pass_count == 2:
+                #game ends
+                if score_callback:
+                    score_callback(self.score())
+                return True
+            
             #success!
             return True
             
