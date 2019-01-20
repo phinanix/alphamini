@@ -45,6 +45,13 @@ class GoGame():
                 out.append( (x,y) )
         return out
 
+    def __neighbors_of_group(self, group_list):
+        group_set = set(group_list)
+        candidates = set()
+        for x,y in group_set:
+            candidates.update(self.__neighbors(x,y))
+        return candidates - group_set
+        
     '''takes a board, an intersection, and a color
     returns true if there is a stone of that color at that position
     or if color is -1, whether that intersection is empty 
@@ -56,7 +63,12 @@ class GoGame():
         else:
             #check if square contains the given color
             return board[i,j,color] == 1
-        
+    def __check_squares(self, board, square_list, color):
+        return any( (self.__check_square(board, i, j, color)
+                     for i,j in square_list) )
+    def __is_empty(self, board, i, j):
+        return self.__check_square(board, i, j, -1)
+    
     '''takes a board, an intersection, and a color
     returns a list of tuples of intersections containing all squares that 
     stone is connected to
@@ -72,7 +84,7 @@ class GoGame():
         while s:
             x,y = s.pop()
             visited.add( (x,y) )
-            if self.__check_square(board, i, j, color):
+            if self.__check_square(board, x, y, color):
                 out.append( (x,y) )
                 s.extend([x for x in self.__neighbors(x,y) if x not in visited])
         return out
@@ -82,18 +94,14 @@ class GoGame():
     returns -1 if the space is empty'''
     def __liberties(self, board, i, j, color, verbose=False):
         if board[i,j,color]==0:
-            if verbose:
-                print("recieved board", self.__print_board(board))
             return -1
-        liberty_set = set()
-        for x,y in self.__group(board, i, j, color):
-            liberty_set.update(self.__neighbors(x,y))
+        neighbors = self.__neighbors_of_group(self.__group(board,i,j,color))
+        return sum( 1 for x,y in neighbors if self.__is_empty(board,x,y))
 
-        liberty_count = 0
-        for x,y in liberty_set:
-            if board[x,y,0]==0 and board[x,y,1]==0:
-                liberty_count += 1
-        return liberty_count
+    def can_reach(self, board, i, j, color, color_to_reach):
+        neighbors = self.__neighbors_of_group(self.__group(board,i,j,color))
+        return any(self.__check_square(board,i,j,color_to_reach)
+                   for i,j in neighbors)
     
     '''takes a size x size x 2 array representing a board and a color
     returns the board with all stones of that color captured
@@ -102,7 +110,7 @@ class GoGame():
         new_board = np.copy(board)
         for i in range(self.size):
             for j in range(self.size):
-                if self.__liberties(new_board,i,j, color) == 0:
+                if self.__liberties(new_board,i,j, color, verbose=verbose) == 0:
                     if verbose:
                         print("capturing group at:", i, j, "color:", color)
                     for point in self.__group(new_board, i, j, color):
@@ -202,9 +210,11 @@ class GoGame():
         #print(self.board)
         #clear captures
         self.board[:,:,:2] = self.__capture(self.board[:,:,:2],
-                                            (self.cur_player+1)%2)
+                                            (self.cur_player+1)%2,
+                                            verbose = False)
         self.board[:,:,:2] = self.__capture(self.board[:,:,:2],
-                                            self.cur_player)
+                                            self.cur_player,
+                                            verbose = False)
         #update turn and player
         self.cur_player = (self.cur_player + 1) % 2
         self.turn += 1
@@ -214,7 +224,7 @@ class GoGame():
     def i_move(self, x, y):
         if self.move(x,y,error=True):
             print('New Board:')
-            print(self.get_board_str)
+            print(self.get_board_str())
 
     def play_moves(self, move_list, error=False):
         for x,y in move_list:
@@ -229,9 +239,49 @@ class GoGame():
                     out[i,j] = 1
         return out
 
-    '''returns the current score if the game were to immediately end'''
-    def score(self):
+    def __one_score(self, board, color):
         pass
+        #scan over board, marking 
+        #
+
+    def __mark(self, board, l, value):
+        for x,y in l:
+            board[x,y] = value
+            
+    '''returns the current score if the game were to immediately end
+    from the perspective of a given color
+    '''
+    def score(self, color, verbose = False):
+        other_color = (color+1)%2
+        if color == 1:
+            adj_komi = self.komi
+        else:
+            adj_komi = -1 * self.komi
+        
+        final_board = self.board[:,:,:2]
+        #this array will contain 1s at one's stones and -1s at unfriendly stones
+        marking = self.board[:,:,color] - self.board[:,:,other_color]
+        #fill in empty squares on the board with the person they belong to
+        #or NaN if they do not belong to people
+        for x in range(self.size):
+            for y in range(self.size):
+                if marking[x,y] == 0:
+                    group = self.__group(final_board,x,y,-1)
+                    reach_friend = self.can_reach(final_board,x,y,-1,color)
+                    reach_foe = self.can_reach(final_board,x,y,-1,other_color)
+                    if reach_friend and reach_foe:
+                        self.__mark(marking, group, np.nan)
+                    elif reach_friend:
+                        self.__mark(marking, group, 1)
+                    elif reach_foe:
+                        self.__mark(marking, group, -1)
+                    else:
+                        raise ValueError("we fucked up in scoring")
+        if verbose:
+            print("marked board:\n", marking)
+            print("komi:", adj_komi)
+        return np.nansum(marking) + adj_komi
+                
 
     def __print_board(self, board):
         out = []
