@@ -13,7 +13,7 @@ class SNode():
         self.state = state
         self.parent = parent
         #initialized to zero when created, will be updated later
-        self.vists = 0
+        self.visits = 0
         self.actions = []
         #added once state is evaluated
         self.valuation = None
@@ -30,13 +30,15 @@ class SNode():
         return self.visits!=0
 
     def best_child(self):
+        if not self.actions:
+            return None
         best = self.actions[0]
         for child in self.actions[1:]:
-            if child.value() > best.value:
+            if child.value() > best.value():
                 best = child
         return best
 
-    def vist(self):
+    def visit(self):
         self.visits += 1
         return self.best_child()
 
@@ -59,7 +61,8 @@ class AEdge():
         self.subtree_value = 0
         self.action_value = 0
         #calculate successor
-        self.result = parent.copy()
+        self.result = parent.state.copy()
+        
         self.result.move(x,y)
 
     def __uct(self):
@@ -138,10 +141,10 @@ def pick_move(root, temp):
         pass_count = pass_count**(1/temp)
     probs = np.divide(temps, temps.sum()+pass_count)
     pass_count = pass_count / temps.sum()+pass_count
-    1d_probs = np.zeros( probs.size+1 )
-    1d_probs[1:] = np.ravel(probs)
-    1d_probs[0] = pass_count
-    choice = np.random.choice(np.arrange(size**2+1), p=1d_probs)
+    one_d_probs = np.zeros( probs.size+1 )
+    one_d_probs[1:] = np.ravel(probs)
+    one_d_probs[0] = pass_count
+    choice = np.random.choice(np.arrange(size**2+1), p=one_d_probs)
     if choice == 0:
         return (-1,-1) #decided to pass
     return np.unravel_index(choice, temps.shape)

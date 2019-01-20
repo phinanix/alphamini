@@ -31,6 +31,8 @@ class GoGame():
         out.board = np.copy(self.board)
         out.cur_player = self.cur_player
         out.turn = self.turn
+        return out
+    
     '''returns whether a board position is in bounds of the board
     '''
     def __in_bounds(self, i, j):
