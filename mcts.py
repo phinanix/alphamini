@@ -80,10 +80,10 @@ class AEdge():
         self.subtree_value = 0
         self.action_value = 0
         #calculate successor
-        self.result = parent.state.copy()
+        result = parent.state.copy()
+        result.move(x,y)
+        self.child = SNode(result, self)
         
-        self.result.move(x,y)
-
     def __uct(self):
         return params.c_puct*self.prior*(self.parent.visits**.5)/(1+self.visits)
 
@@ -92,7 +92,7 @@ class AEdge():
     
     def visit(self):
         self.visits += 1
-        return self.result
+        return self.child
 
     def update(self, child_value):
         self.subtree_value += child_value
