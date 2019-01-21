@@ -27,6 +27,7 @@ class SNode():
         self.visits = 1
         #feed my state to the network
         policy, value = network.evaluate(self.state.board, self.state.cur_player)
+        policy = policy.flatten()
         #first element of policy array is pass
         #label self valuation
         self.valuation=value
@@ -104,7 +105,7 @@ current is the current state in the tree
 '''
 def select(state):
     current = state 
-    while not current.is_expanded():
+    while current.is_expanded():
         action = current.visit()
         current = action.visit()
     return current
@@ -129,9 +130,11 @@ starting from a given root and network
 returns the evaluated root
 '''
 def search(root, network, playouts=100):
-    for _ in range(playouts):
+    root.expand(network)
+    for i in range(playouts):
+        print("playout number:", i)
         leaf = select(root)
-        leaf.expand()
+        leaf.expand(network)
         backup(leaf)
     return root
 
@@ -164,7 +167,8 @@ def pick_move(root, temp):
     one_d_probs = np.zeros( probs.size+1 )
     one_d_probs[1:] = np.ravel(probs)
     one_d_probs[0] = pass_count
-    choice = np.random.choice(np.arrange(size**2+1), p=one_d_probs)
+    print('one_d_probs', one_d_probs)
+    choice = np.random.choice(np.arange(size**2+1), p=one_d_probs)
     if choice == 0:
         return (-1,-1) #decided to pass
     return np.unravel_index(choice, temps.shape)
