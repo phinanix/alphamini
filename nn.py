@@ -54,8 +54,9 @@ class Network():
                            
         
     '''takes as input a board of sizexsizex(2*hist_size)
-    returns a tuple p,v with p an array of sizexsize that sums to 1 
+    returns a tuple p,v with p an array of sizexsize that contains the logarithms
     of probabilities of selecting moves
+    NOTE: have to turn training data into log probabilities !
     v a scalar in (-1, 1) representing the likelihood of winning from the 
     current player's persepctive
     '''

@@ -1,3 +1,6 @@
+import math
+import numpy as np
+
 import go
 import nn
 import params
@@ -18,12 +21,28 @@ class SNode():
         #added once state is evaluated
         self.valuation = None
 
+    
     def expand(self, network):
+        assert not self.is_expanded(), "expanded an already expanded node"
         self.visits = 1
         #feed my state to the network
+        policy, value = network.evaluate(self.state.board, self.state.cur_player)
+        #first element of policy array is pass
         #label self valuation
+        self.valuation=value
         #generate children
-        #label children with priors
+        legal_moves = self.state.legal_moves(self.state.cur_player)
+        #passing is always legal
+        pass_child = AEdge(-1, -1, self, math.e**policy[0])
+        self.actions.append(pass_child)
+        #reshape priors
+        priors = policy[1:].reshape(self.state.size, self.state.size)
+        for x in range(self.state.size):
+            for y in range(self.state.size):
+                if legal_moves[x,y]:
+                    #label children with priors
+                    child = AEdge(x,y,self, math.e**priors[x,y])
+                    self.actions.append(child)
         return self.valuation
         
     def is_expanded(self):
@@ -101,8 +120,9 @@ def backup(state):
     while current.parent.parent:
         current = current.parent.parent
         current.update(value)
-    #expand root
-
+    #expand root#I don't know what this comment means but I think the root is
+    #taken care of?
+    
 '''
 runs a specified number of playouts 
 starting from a given root and network

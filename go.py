@@ -37,6 +37,7 @@ class GoGame():
     '''
     def __in_bounds(self, i, j):
         return i >= 0 and j >= 0 and i < self.size and j < self.size
+
     '''returns the orthogonal neighbors of a given point
     '''
     def __neighbors(self, i, j):
