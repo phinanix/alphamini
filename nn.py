@@ -1,16 +1,19 @@
 import numpy as np
 #import keras
 from keras.models import Model
-from keras.layers import Input, Conv2D, BatchNormalization, Dense, Activation,Add
+from keras.layers import (Input, Conv2D, BatchNormalization, Dense,
+                          Activation,Add,Flatten)
 from keras.activations import relu
 import go
 
 def Conv_Norm(filters, inputs):
-    return Activation('relu')(BatchNormalization()(Conv2D(filters, (3,3), padding='same')(inputs)))
+    return BatchNormalization()(Conv2D(filters, (3,3), padding='same')(inputs))
+
+def Conv_Norm_relu(filters, inputs):
+    return Activation('relu')(Conv_Norm(filters, inputs))
 
 def Res_Block(filters, inputs):
-    intermediate = BatchNormalization()(
-        Conv2D(filters, (3,3), padding='same')(Conv_Norm(filters, inputs)))
+    intermediate = Conv_Norm_relu(filters, Conv_Norm_relu(filters, inputs))
     return Activation('relu')(Add()([inputs,intermediate]))
 
 class Network():
@@ -34,18 +37,20 @@ class Network():
 
         #intialize model here
         inputs = Input(shape=(board_size,board_size,hist_size*2+1))
-        intermediate = Conv_Norm(residual_filters, inputs)
+        intermediate = Conv_Norm_relu(residual_filters, inputs)
         for _ in range(residual_blocks):
             intermediate = Res_Block(residual_filters, intermediate)
-        policy = Conv_Norm(policy_filters, intermediate)
+        policy = Conv_Norm_relu(policy_filters, intermediate)
+        policy = Flatten()(policy)
         policy_out = Dense(board_size**2+1)(policy)
-        value = Conv_Norm(value_filters, intermediate)
+        value = Conv_Norm_relu(value_filters, intermediate)
+        value = Flatten()(value)
         value = Dense(value_hidden, activation="relu")(value)
         value_out = Dense(1, activation="tanh")(value)
         self.model = Model(inputs=inputs, outputs=[policy_out, value_out])
         self.model.compile(optimizer="sgd",
                            loss=["binary_crossentropy","mean_squared_error"])
-        self.model.summary()
+        #self.model.summary()
                            
         
     '''takes as input a board of sizexsizex(2*hist_size)
@@ -55,13 +60,14 @@ class Network():
     current player's persepctive
     '''
     def evaluate(self, board, player):
-        player_plane = np.full( (self.size,self.size), player)
-        input_block = np.empty( (self.size,self.size,(self.hist_size*2)+1) )
-        input_block[:,:, :-1] = board
-        input_block[:,:, -1 ] = player_plane
+        batch_size = 1
+        player_plane = np.full( (self.board_size,self.board_size), player)
+        input_block = np.empty( (batch_size, self.board_size,self.board_size,
+                                 (self.hist_size*2)+1) )
+        input_block[:,:,:, :-1] = board
+        input_block[:,:,:, -1 ] = player_plane
 
-        #evaluate network here
+        policy_out,value_out = self.model.predict(input_block)
 
-        stub_p = np.full( (self.size, self.size) , 1 / (self.size**2) ) 
-        return stub_p, 0
+        return policy_out, value_out
     
