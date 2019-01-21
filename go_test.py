@@ -6,7 +6,7 @@ from hypothesis.strategies import floats, integers, tuples, lists, composite
 size = 9
 moves = lists(tuples(integers(min_value=0, max_value = size-1),
                          integers(min_value=0, max_value = size-1)),
-                  min_size = 10, max_size = 40, unique = True)
+                  min_size = 1, max_size = 10, unique = True)
 
 class TestGoClass():
     def set_up(self):
