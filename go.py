@@ -23,6 +23,7 @@ class GoGame():
         self.cur_player = 0 #black first
         self.turn = 0
         self.pass_count = 0
+        self.game_over = False
 
     '''returns a deep/true copy of the class
     '''
@@ -178,7 +179,10 @@ class GoGame():
                 print('move is ko')
             return False
         return True
-        
+
+    def is_over(self):
+        return self.game_over
+    
     '''plays a move for the current player at (x,y)
     prints an error message if False is returned, no message if True
     returns True if sucessful, False if unsuccessful
@@ -187,6 +191,11 @@ class GoGame():
     (-1, -1) is a pass, which is always legal and does not change the board state
     '''
     def move(self, x, y, error=False, score_callback=None):
+        if self.is_over:
+            if error:
+                print('game is over')
+            return False
+        
         if x == -1 and y == -1:
             #this is a pass
             self.cur_player = (self.cur_player + 1) % 2
@@ -194,6 +203,7 @@ class GoGame():
             self.pass_count += 1
             if self.pass_count == 2:
                 #game ends
+                self.game_over=True
                 if score_callback:
                     score_callback(self.score())
                 return True
