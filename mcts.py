@@ -132,7 +132,6 @@ returns the evaluated root
 def search(root, network, playouts=100):
     root.expand(network)
     for i in range(playouts):
-        print("playout number:", i)
         leaf = select(root)
         leaf.expand(network)
         backup(leaf)
@@ -156,18 +155,20 @@ def pick_move(root, temp):
     if temp == 0:
         max_val = max(pass_count, move_array.max())
         temps = np.zeros_like(move_array)
+        pass_temp = 0
         if pass_count >= max_val:
-            pass_count = 1
+            pass_temp = 1
         temps[np.where(move_array == max_val)] = 1
     else:
         temps = np.power(move_array, 1/temp)
-        pass_count = pass_count**(1/temp)
-    probs = np.divide(temps, temps.sum()+pass_count)
-    pass_count = pass_count / temps.sum()+pass_count
+        pass_temp = pass_count**(1/temp)
+    probs = np.divide(temps, temps.sum()+pass_temp)
+    pass_prob = pass_temp / (temps.sum()+pass_temp)
     one_d_probs = np.zeros( probs.size+1 )
     one_d_probs[1:] = np.ravel(probs)
-    one_d_probs[0] = pass_count
+    one_d_probs[0] = pass_prob
     print('one_d_probs', one_d_probs)
+    print('sum:', np.sum(one_d_probs))
     choice = np.random.choice(np.arange(size**2+1), p=one_d_probs)
     if choice == 0:
         return (-1,-1) #decided to pass

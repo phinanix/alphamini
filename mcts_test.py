@@ -40,5 +40,8 @@ class TestMCTS():
     def test_search(self):
         t = self.gen_root()
         network = self.gen_network()
-        out = mcts.search(t, network, playouts=10)
-        move = mcts.pick_move(out, .2)
+        out = mcts.search(t, network, playouts=100)
+        move = mcts.pick_move(out, .01)
+        print("picked move:", move)
+test = TestMCTS()
+test.test_search()
