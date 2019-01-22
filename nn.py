@@ -71,4 +71,12 @@ class Network():
         policy_out,value_out = self.model.predict(input_block)
 
         return policy_out, value_out
-    
+
+    '''
+    Takes a 3 tuple of np arrays, which contain
+    game boards, policy targets, value targets,
+    in that order, and trains for one epoch on them
+    '''
+    def update(self, data, batch_size=32):
+        inputs, policies, values = data
+        self.model.fit(inputs, [policies, values], batch_size=batch_size)
