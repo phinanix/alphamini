@@ -8,7 +8,8 @@ class Agent():
     def move(self, state, temp, retain_tree=True, playouts=100):
         #initialize search tree
         if self.search_tree:
-            assert self.search_tree.state == state
+            assert self.search_tree.state == state, \
+                "if we retained the tree it must be the right tree"
         else:
             self.search_tree = mcts.SNode(state, None)
         #search for specified playouts
