@@ -8,3 +8,6 @@ residual_blocks = 5
 policy_filters = 8
 value_filters = 8
 value_hidden = 256
+
+#size of history that's input to the network
+hist_size = 8
