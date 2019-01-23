@@ -1,4 +1,5 @@
 import math
+from statistics import mean
 import numpy as np
 
 import go
@@ -22,7 +23,9 @@ class SNode():
 
         self.valuation = None
 
-    
+    '''for the moment the policy output of the network is treated as 
+    the logs of probabilities, which is subject to change.
+    '''
     def expand(self, network):
         assert not self.is_expanded(), "expanded an already expanded node"
         self.visits = 1
@@ -32,7 +35,7 @@ class SNode():
         policy = policy.flatten()
         #first element of policy array is pass
         #label self valuation
-        self.valuation=value
+        self.valuation=value[0][0]
         #generate children
         legal_moves = self.state.legal_moves(self.state.cur_player)
         #passing is always legal
@@ -63,6 +66,34 @@ class SNode():
     def visit(self):
         self.visits += 1
         return self.best_child()
+
+    def value(self):
+        return mean( x.action_value for x in self.actions )
+
+    def policy(self, temp=1):
+        move_array = np.zeros( (self.state.size,self.state.size) )
+        for action in self.actions:
+            x,y = action.move
+            if x==-1 and y==-1:
+                pass_count = action.visits
+            else:
+                move_array[x,y] = action.visits
+        if temp == 0:
+            max_val = max(pass_count, move_array.max())
+            temps = np.zeros_like(move_array)
+            pass_temp = 0
+            if pass_count >= max_val:
+                pass_temp = 1
+            temps[np.where(move_array == max_val)] = 1
+        else:
+            temps = np.power(move_array, 1/temp)
+            pass_temp = pass_count**(1/temp)
+        probs = np.divide(temps, temps.sum()+pass_temp)
+        pass_prob = pass_temp / (temps.sum()+pass_temp)
+        one_d_probs = np.zeros( probs.size+1 )
+        one_d_probs[1:] = np.ravel(probs)
+        one_d_probs[0] = pass_prob
+        return one_d_probs
 
 class AEdge():
     '''represents a possible action in a state
@@ -147,33 +178,10 @@ moves
 '''
 def pick_move(root, temp):
     size = root.state.size
-    move_array = np.zeros( (size,size) )
-    for action in root.actions:
-        x,y = action.move
-        if x==-1 and y==-1:
-            pass_count = action.visits
-        else:
-            move_array[x,y] = action.visits
-    if temp == 0:
-        max_val = max(pass_count, move_array.max())
-        temps = np.zeros_like(move_array)
-        pass_temp = 0
-        if pass_count >= max_val:
-            pass_temp = 1
-        temps[np.where(move_array == max_val)] = 1
-    else:
-        temps = np.power(move_array, 1/temp)
-        pass_temp = pass_count**(1/temp)
-    probs = np.divide(temps, temps.sum()+pass_temp)
-    pass_prob = pass_temp / (temps.sum()+pass_temp)
-    one_d_probs = np.zeros( probs.size+1 )
-    one_d_probs[1:] = np.ravel(probs)
-    one_d_probs[0] = pass_prob
-    #print('one_d_probs', one_d_probs)
-    #print('sum:', np.sum(one_d_probs))
+    one_d_probs = root.policy(temp=temp)
     choice = np.random.choice(np.arange(size**2+1), p=one_d_probs)
     if choice == 0:
         return (-1,-1) #decided to pass
     #-1 since passing occupies 0, but should not be counted
-    return np.unravel_index(choice-1, temps.shape)
+    return np.unravel_index(choice-1, (size,size))
     

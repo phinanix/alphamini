@@ -9,7 +9,6 @@ class TestTraining():
         
     def test_self_play(self):
         train = self.ze_setup(9)
-        train.self_play(10, .3)
+        train.self_play(2, .3)
+        train.self_train(num_positions=32)
 
-#test = TestTraining()
-#test.test_self_play()

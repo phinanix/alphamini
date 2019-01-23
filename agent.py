@@ -4,8 +4,10 @@ class Agent():
     def __init__(self, network):
         self.network = network
         self.search_tree = None
-
-    def move(self, state, temp, retain_tree=False, playouts=100):
+        
+    #TODO: tree retention (currently broken)
+    def move(self, state, temp, retain_tree=False, playouts=100,
+             save=False, replay=None):
         #initialize search tree
         if self.search_tree:
             assert self.search_tree.state == state, \
@@ -14,6 +16,9 @@ class Agent():
             self.search_tree = mcts.SNode(state, None)
         #search for specified playouts
         mcts.search(self.search_tree, self.network, playouts=playouts)
+        #save tree, if needed
+        if save and replay:
+            replay.save(self.search_tree)
         #pick move
         picked_move = mcts.pick_move(self.search_tree, temp)
         if retain_tree:

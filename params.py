@@ -11,4 +11,7 @@ value_hidden = 256
 
 #size of history that's input to the network
 hist_size = 8
+
 komi = 4.5
+
+replay_length = 10**4

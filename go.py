@@ -309,8 +309,15 @@ class GoGame():
             print("marked board:\n", marking)
             print("komi:", adj_komi)
         return np.nansum(marking) + adj_komi
-                
 
+    '''returns the game result, 1 for a black win, -1 for a white win
+    '''
+    def result(self):
+        if self.score(0) > 0:
+            return 1
+        else:
+            return -1
+        
     def __print_board(self, board):
         out = []
         for i in range(self.size):
