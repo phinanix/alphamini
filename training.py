@@ -16,6 +16,7 @@ creates checkpoints in training and
 evaluates different versions of the network 
 to ensure that progress is being made
 '''
+
 class Training():
     def __init__(self, board_size, network_filename=None, exp_rp_filename=None):
         self.board_size = board_size
@@ -70,3 +71,7 @@ class Training():
         self.training_cycles += 1
         if self.training_cycles % p.save_network_every == 0:
             self.main_network.save_weights(filename)
+
+    def training_loop(self, stub_exp_rp_name, stub_network_name,
+                      rounds=3, games_per_round=100, positions_per_round=1024):
+        pass
