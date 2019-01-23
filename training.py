@@ -4,6 +4,8 @@ import agent
 import params as p
 import experience_replay as exp_rp
 
+from keras.models import save_weights, load_weights
+
 '''
 Manages the main training loop.
 Instantiates the network on creation
@@ -15,17 +17,21 @@ evaluates different versions of the network
 to ensure that progress is being made
 '''
 class Training():
-    def __init__(self, board_size):
+    def __init__(self, board_size, network_filename=None, exp_rp_filename=None):
         self.board_size = board_size
         self.main_network = nn.Network(board_size, p.hist_size,
                                        p.residual_filters, p.residual_blocks,
                                        p.policy_filters, p.value_filters,
                                        p.value_hidden)
-
+        if network_filename:
+            self.main_network.load_weights(network_filename)
+        self.training_cycles = 0
+        
         self.experience_replay = exp_rp.ExperienceReplay(self.board_size,
                                                          p.hist_size,
                                                          p.replay_length)
-                                                        
+        self.self_play_cycles = 0
+        
         self.best_agent = agent.Agent(self.main_network)
 
     
@@ -48,12 +54,19 @@ class Training():
             
         replay.transfer(exp_replay, game.result())
             
-    def self_play(self, num_games, temp, save=True):
+    def self_play(self, num_games, filename, temp, save=True):
         for _ in range(num_games):
             self.play(self.best_agent, self.best_agent, temp,
                       save=save, exp_replay=self.experience_replay)
             
+        self.self_play_cycles += 1
+        if self.self_play_cycles%p.save_replay_every == 0:
+            self.experience_replay.checkpoint(filename)
+            
     #TODO: decide whether to implement tournament
-    def self_train(self, num_positions=1024, batch_size=32):
+    def self_train(self, filename, num_positions=1024, batch_size=32):
         data = self.experience_replay.select(num_positions)
         self.main_network.update(data, batch_size=batch_size)
+        self.training_cycles += 1
+        if self.training_cycles % p.save_network_every == 0:
+            self.main_network.save_weights(filename)

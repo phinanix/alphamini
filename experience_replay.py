@@ -67,14 +67,23 @@ class ExperienceReplay():
     so all values are valid, or whether every value at and beyond pointer is 
     garbage
     '''
-    def __init__(self, board_size, game_hist_size, exp_replay_size):
+    def __init__(self, board_size, game_hist_size, exp_replay_size,
+                 checkpoint_filename=None):
         self.size = exp_replay_size
         
-        self.inputs = np.empty( (exp_replay_size,
+        if checkpoint_filename:
+            npzfile=np.load(checkpoint_filename)
+            self.inputs = npzfile['inputs']
+            self.policies = npzfile['policies']
+            self.game_results = npzfile['game_results']
+            self.search_values = npzfile['search_values']
+            
+        else:
+            self.inputs = np.empty( (exp_replay_size,
                             board_size, board_size, (game_hist_size*2)+1) )
-        self.policies = np.empty( (exp_replay_size, (board_size**2)+1) )
-        self.game_results = np.empty((exp_replay_size))
-        self.search_values = np.empty((exp_replay_size))
+            self.policies = np.empty( (exp_replay_size, (board_size**2)+1) )
+            self.game_results = np.empty((exp_replay_size))
+            self.search_values = np.empty((exp_replay_size))
 
         self.pointer = 0
         self.full = False
@@ -108,3 +117,8 @@ class ExperienceReplay():
         values_subset = (game_results_subset+search_values_subset)*0.5
 
         return input_subset, policies_subset, values_subset
+
+    def checkpoint(self, filename):
+        np.savez(filename, inputs=self.inputs, policies=self.policies,
+                 game_results=self.game_results,
+                 search_values=self.search_values)
