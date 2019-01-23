@@ -208,13 +208,15 @@ class GoGame():
             self.turn += 1
             self.pass_count += 1
             if self.pass_count == 2:
-                print('game ended')
+                if error:
+                    print('game ended')
                 #game ends
                 self.game_over=True
                 if score_callback:
                     score_callback(self.score())
             if self.turn > self.turn_limit:
-                print('game ended on turns')
+                if error:
+                    print('game ended on turns')
                 self.game_over=True
                 if score_callback:
                     score_callback(self.score())
@@ -242,7 +244,8 @@ class GoGame():
         self.cur_player = (self.cur_player + 1) % 2
         self.turn += 1
         if self.turn > self.turn_limit:
-            print('game ended on turns')
+            if error:
+                print('game ended on turns')
             self.game_over=True
             if score_callback:
                 score_callback(self.score())
@@ -304,7 +307,9 @@ class GoGame():
                     elif reach_foe:
                         self.__mark(marking, group, -1)
                     else:
-                        raise ValueError("we fucked up in scoring")
+                        #this means there are no stones on the board
+                        assert not np.any(final_board)
+                        self.__mark(marking, group, 0)
         if verbose:
             print("marked board:\n", marking)
             print("komi:", adj_komi)

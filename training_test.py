@@ -7,8 +7,8 @@ class TestTraining():
     def test_init(self):
         train = self.ze_setup(9)
         
-    def test_self_play(self):
-        train = self.ze_setup(9)
-        train.self_play(2, .3)
-        train.self_train(num_positions=32)
+    def test_train_loop(self):
+        train = self.ze_setup(5)
+        train.training_loop('test_exp_rp','test_network', rounds=3,
+                            games_per_round=10, positions_per_round=64)
 

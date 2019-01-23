@@ -114,6 +114,8 @@ class ExperienceReplay():
         policies_subset = self.policies[indices, :]
         game_results_subset = self.game_results[indices]
         search_values_subset = self.search_values[indices]
+        #print("game results:", game_results_subset)
+        #print("search_values:", search_values_subset)
         values_subset = (game_results_subset+search_values_subset)*0.5
 
         return input_subset, policies_subset, values_subset

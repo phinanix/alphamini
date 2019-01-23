@@ -4,7 +4,7 @@ import agent
 import params as p
 import experience_replay as exp_rp
 
-from keras.models import save_weights, load_weights
+#from keras.models import save_weights, load_weights
 
 '''
 Manages the main training loop.
@@ -25,7 +25,7 @@ class Training():
                                        p.policy_filters, p.value_filters,
                                        p.value_hidden)
         if network_filename:
-            self.main_network.load_weights(network_filename)
+            self.main_network.model.load_weights(network_filename)
         self.training_cycles = 0
         
         self.experience_replay = exp_rp.ExperienceReplay(self.board_size,
@@ -42,8 +42,8 @@ class Training():
         game = go.GoGame(self.board_size, p.hist_size, p.komi)
         replay = exp_rp.GameReplay(self.board_size, p.hist_size)
         while not game.is_over():
-            print("Turn:", game.turn)
-            print("Board:\n", game.get_board_str())
+            #print("Turn:", game.turn)
+            #print("Board:\n", game.get_board_str())
             if game.cur_player==0:
                agent = agent_0
             else:
@@ -51,12 +51,13 @@ class Training():
             x,y = agent.move(game, temp,
                              retain_tree=retain_tree, playouts=playouts,
                              save=True, replay=replay)
-            game.move(x,y, error=True)
+            game.move(x,y, error=False)
             
         replay.transfer(exp_replay, game.result())
             
     def self_play(self, num_games, filename, temp, save=True):
         for _ in range(num_games):
+            print("game:", _)
             self.play(self.best_agent, self.best_agent, temp,
                       save=save, exp_replay=self.experience_replay)
             
@@ -67,11 +68,15 @@ class Training():
     #TODO: decide whether to implement tournament
     def self_train(self, filename, num_positions=1024, batch_size=32):
         data = self.experience_replay.select(num_positions)
-        self.main_network.update(data, batch_size=batch_size)
+        self.main_network.update(data, batch_size=batch_size, verbose=1)
         self.training_cycles += 1
         if self.training_cycles % p.save_network_every == 0:
-            self.main_network.save_weights(filename)
+            self.main_network.checkpoint(filename)
 
     def training_loop(self, stub_exp_rp_name, stub_network_name,
                       rounds=3, games_per_round=100, positions_per_round=1024):
-        pass
+        for r in range(rounds):
+            print("round:", r)
+            self.self_play(games_per_round, stub_exp_rp_name+" round "+str(r),0.2)
+            self.self_train(stub_network_name+" round "+str(r),
+                            num_positions=positions_per_round)

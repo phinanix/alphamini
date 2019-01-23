@@ -77,6 +77,13 @@ class Network():
     game boards, policy targets, value targets,
     in that order, and trains for one epoch on them
     '''
-    def update(self, data, batch_size=32):
+    def update(self, data, batch_size=32, verbose=0):
         inputs, policies, values = data
-        self.model.fit(inputs, [policies, values], batch_size=batch_size)
+        #print("inputs:\n", inputs)
+        #print("policies:\n", policies)
+        #print("values:\n", values)
+        self.model.fit(inputs, [policies, values], batch_size=batch_size,
+                       verbose=verbose)
+
+    def checkpoint(self, filename):
+        self.model.save_weights(filename)

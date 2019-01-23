@@ -68,7 +68,10 @@ class SNode():
         return self.best_child()
 
     def value(self):
-        return mean( x.action_value for x in self.actions )
+        if self.actions:
+            return mean( x.action_value for x in self.actions )
+        else:
+            return 0
 
     def policy(self, temp=1):
         move_array = np.zeros( (self.state.size,self.state.size) )
@@ -129,8 +132,12 @@ class AEdge():
         return self.child
 
     def update(self, child_value):
+        #TODO: figure out why sometimes a node is being updated but has
+        #been visited 0 times
         self.subtree_value += child_value
-        self.action_value = self.subtree_value / self.visits
+        #print("updated action value to:",
+        #self.subtree_value / max(self.visits, 1))
+        self.action_value = self.subtree_value / max(self.visits, 1)
 
 '''traverses the tree starting at state to determine next node
 to expand
