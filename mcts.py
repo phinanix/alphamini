@@ -18,7 +18,8 @@ class SNode():
         #initialized to zero when created, will be updated later
         self.visits = 0
         self.actions = []
-        #added once state is evaluated
+        #added once state is evaluated        #added once state is evaluated
+
         self.valuation = None
 
     
@@ -26,7 +27,8 @@ class SNode():
         assert not self.is_expanded(), "expanded an already expanded node"
         self.visits = 1
         #feed my state to the network
-        policy, value = network.evaluate(self.state.board, self.state.cur_player)
+        policy, value = network.evaluate(self.state.board,
+                                         self.state.cur_player)
         policy = policy.flatten()
         #first element of policy array is pass
         #label self valuation
@@ -167,10 +169,11 @@ def pick_move(root, temp):
     one_d_probs = np.zeros( probs.size+1 )
     one_d_probs[1:] = np.ravel(probs)
     one_d_probs[0] = pass_prob
-    print('one_d_probs', one_d_probs)
-    print('sum:', np.sum(one_d_probs))
+    #print('one_d_probs', one_d_probs)
+    #print('sum:', np.sum(one_d_probs))
     choice = np.random.choice(np.arange(size**2+1), p=one_d_probs)
     if choice == 0:
         return (-1,-1) #decided to pass
-    return np.unravel_index(choice, temps.shape)
+    #-1 since passing occupies 0, but should not be counted
+    return np.unravel_index(choice-1, temps.shape)
     

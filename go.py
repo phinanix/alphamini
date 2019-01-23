@@ -1,3 +1,4 @@
+import math
 import numpy as np
 
 '''
@@ -24,6 +25,7 @@ class GoGame():
         self.turn = 0
         self.pass_count = 0
         self.game_over = False
+        self.turn_limit = math.floor(1.5* self.size**2)
 
     '''returns a deep/true copy of the class
     '''
@@ -33,6 +35,9 @@ class GoGame():
         out.cur_player = self.cur_player
         out.turn = self.turn
         return out
+
+    def cur_board(self):
+        return self.board[:,:,:2]
     
     '''returns whether a board position is in bounds of the board
     '''
@@ -191,23 +196,28 @@ class GoGame():
     (-1, -1) is a pass, which is always legal and does not change the board state
     '''
     def move(self, x, y, error=False, score_callback=None):
-        if self.is_over:
+        if self.is_over():
             if error:
                 print('game is over')
             return False
         
         if x == -1 and y == -1:
+            
             #this is a pass
             self.cur_player = (self.cur_player + 1) % 2
             self.turn += 1
             self.pass_count += 1
             if self.pass_count == 2:
+                print('game ended')
                 #game ends
                 self.game_over=True
                 if score_callback:
                     score_callback(self.score())
-                return True
-            
+            if self.turn > self.turn_limit:
+                print('game ended on turns')
+                self.game_over=True
+                if score_callback:
+                    score_callback(self.score())
             #success!
             return True
             
@@ -231,6 +241,11 @@ class GoGame():
         #update turn and player
         self.cur_player = (self.cur_player + 1) % 2
         self.turn += 1
+        if self.turn > self.turn_limit:
+            print('game ended on turns')
+            self.game_over=True
+            if score_callback:
+                score_callback(self.score())
         #success!
         return True
 

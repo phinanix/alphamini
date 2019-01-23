@@ -68,7 +68,7 @@ class Network():
         input_block[:,:,:, :-1] = board
         input_block[:,:,:, -1 ] = player_plane
 
-        policy_out,value_out = self.model.predict(input_block)
+        policy_out,value_out = self.model.predict(input_block, verbose=0)
 
         return policy_out, value_out
 

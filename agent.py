@@ -5,7 +5,7 @@ class Agent():
         self.network = network
         self.search_tree = None
 
-    def move(self, state, temp, retain_tree=True, playouts=100):
+    def move(self, state, temp, retain_tree=False, playouts=100):
         #initialize search tree
         if self.search_tree:
             assert self.search_tree.state == state, \
@@ -20,7 +20,7 @@ class Agent():
             for child in self.search_tree.actions:
                 if child.move==picked_move:
                     self.search_tree = child
-            assert self.search_tree.move = picked_move, \
+            assert self.search_tree.move == picked_move, \
                             "must have properly replaced the search tree"
             self.search_tree = self.search_tree.child
         else:

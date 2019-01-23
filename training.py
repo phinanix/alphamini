@@ -27,17 +27,19 @@ class Training():
 
     #TODO:properly handle game end
     #TODO:dynamic temperature
-    def play(self, agent_0, agent_1, temp, retain_tree=True, playouts=100):
+    def play(self, agent_0, agent_1, temp, retain_tree=False, playouts=10):
         game = go.GoGame(self.board_size, p.hist_size, p.komi)
         while not game.is_over():
+            print("Turn:", game.turn)
+            print("Board:\n", game.get_board_str())
             if game.cur_player==0:
-                x,y = agent_0.move(game.state, temp, retain_tree=retain_tree,
-                                    playouts=playouts)
+                x,y = agent_0.move(game, temp,
+                                   retain_tree=retain_tree, playouts=playouts)
             else:
-                x,y = agent_1.move(game.state, temp, retain_tree=retain_tree,
-                                    playouts=playouts)
-            game.move(x,y)
+                x,y = agent_1.move(game, temp,
+                                   retain_tree=retain_tree, playouts=playouts)
+            game.move(x,y, error=True)
             
-    def self_play(self, num_games):
-        for _ in num_games:
-            self.play(self.best_agent, self.best_agent)
+    def self_play(self, num_games, temp):
+        for _ in range(num_games):
+            self.play(self.best_agent, self.best_agent, temp)
