@@ -23,8 +23,8 @@ class SNode():
 
         self.valuation = None
 
-    '''for the moment the policy output of the network is treated as 
-    the logs of probabilities, which is subject to change.
+    '''the policy output of the network is treated as 
+    the direct probability, clipped between 0 and 1
     '''
     def expand(self, network):
         assert not self.is_expanded(), "expanded an already expanded node"
@@ -47,7 +47,9 @@ class SNode():
             for y in range(self.state.size):
                 if legal_moves[x,y]:
                     #label children with priors
-                    child = AEdge(x,y,self, math.e**priors[x,y])
+                    prior = priors[x,y]
+                    #print("prior:", prior)
+                    child = AEdge(x,y,self, prior)
                     self.actions.append(child)
         return self.valuation
         
@@ -186,6 +188,7 @@ moves
 def pick_move(root, temp):
     size = root.state.size
     one_d_probs = root.policy(temp=temp)
+    #print("one_d_probs:", one_d_probs)
     choice = np.random.choice(np.arange(size**2+1), p=one_d_probs)
     if choice == 0:
         return (-1,-1) #decided to pass

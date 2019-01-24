@@ -34,8 +34,8 @@ class GameReplay():
         input_board[:,:,-1] = player_plane
 
         tree_value = tree.value()
-        #TODO: fix log div-by-0
-        policy = np.log(tree.policy())
+        #TODO: fix log div-by-0 (hopefully fixed)
+        policy = tree.policy()
         
         self.inputs.append(input_board)
         self.policies.append(policy)

@@ -38,7 +38,7 @@ class Training():
     
     #TODO:dynamic temperature
     def play(self, agent_0, agent_1, temp,
-             retain_tree=False, playouts=10, save=False, exp_replay=None):
+             retain_tree=False, playouts=100, save=False, exp_replay=None):
         game = go.GoGame(self.board_size, p.hist_size, p.komi)
         replay = exp_rp.GameReplay(self.board_size, p.hist_size)
         while not game.is_over():
@@ -55,7 +55,7 @@ class Training():
             
         replay.transfer(exp_replay, game.result())
             
-    def self_play(self, num_games, filename, temp, save=True):
+    def self_play(self, num_games, temp, filename, save=True, playouts=100):
         for _ in range(num_games):
             print("game:", _)
             self.play(self.best_agent, self.best_agent, temp,
@@ -77,6 +77,8 @@ class Training():
                       rounds=3, games_per_round=100, positions_per_round=1024):
         for r in range(rounds):
             print("round:", r)
-            self.self_play(games_per_round, stub_exp_rp_name+" round "+str(r),0.2)
-            self.self_train(stub_network_name+" round "+str(r),
+            self.self_play(games_per_round, p.temp,
+                           stub_exp_rp_name+"_round_"+str(r),
+                           playouts=p.playouts)
+            self.self_train(stub_network_name+"_round_"+str(r),
                             num_positions=positions_per_round)

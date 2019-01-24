@@ -1,4 +1,4 @@
 from training_test import *
 
 test = TestTraining()
-test.test_train_loop()
+test.test_loading()

@@ -42,7 +42,7 @@ class Network():
             intermediate = Res_Block(residual_filters, intermediate)
         policy = Conv_Norm_relu(policy_filters, intermediate)
         policy = Flatten()(policy)
-        policy_out = Dense(board_size**2+1)(policy)
+        policy_out = Dense(board_size**2+1, activation="sigmoid")(policy)
         value = Conv_Norm_relu(value_filters, intermediate)
         value = Flatten()(value)
         value = Dense(value_hidden, activation="relu")(value)
