@@ -77,39 +77,41 @@ class ExperienceReplay():
             self.policies = npzfile['policies']
             self.game_results = npzfile['game_results']
             self.search_values = npzfile['search_values']
-            
+            self.pointer = npzfile['pointer']
         else:
             self.inputs = np.empty( (exp_replay_size,
                             board_size, board_size, (game_hist_size*2)+1) )
             self.policies = np.empty( (exp_replay_size, (board_size**2)+1) )
             self.game_results = np.empty((exp_replay_size))
             self.search_values = np.empty((exp_replay_size))
-
-        self.pointer = 0
+            self.pointer = np.zeros(1, dtype=np.int32)
         self.full = False
 
     def save(self, board_input, policy, game_result, search_result):
-        self.inputs[self.pointer] = board_input
-        self.policies[self.pointer] = policy
-        self.game_results[self.pointer] = game_result
-        self.search_values[self.pointer] = search_result
+        self.inputs[self.pointer[0]] = board_input
+        self.policies[self.pointer[0]] = policy
+        self.game_results[self.pointer[0]] = game_result
+        self.search_values[self.pointer[0]] = search_result
         #update pointer, with wraparound
-        self.pointer = (self.pointer+1)%self.size
-        if self.pointer==0:
+        self.pointer[0] = (self.pointer[0]+1)%self.size
+        if self.pointer[0]==0:
             #we've wrapped around
             self.full=True
 
     #TODO: configure averaging z and w
     def select(self, num_values):
-        maximum_index = self.exp_replay_size if self.full else self.pointer
-        index_set = set()
+        maximum_index = self.exp_replay_size if self.full else self.pointer[0]
         print("maximum_index:",maximum_index,"num_values", num_values)
-        assert maximum_index > num_values*1.1, \
-            "must have enough values to fill the set"
-        while len(index_set)<num_values:
-            index_set.add(random.randrange(maximum_index))
-            
-        indices = np.array(list(index_set), dtype=np.int32)
+        if maximum_index > num_values*1.1:
+            #we can pick randomly
+            index_set = set()
+            while len(index_set)<num_values:
+                index_set.add(random.randrange(maximum_index))
+            indices = np.array(list(index_set), dtype=np.int32)
+        else:
+            #otherwise just pick everything
+            indices = np.arange(self.pointer[0])
+
         input_subset = self.inputs[indices, :, :, :]
         policies_subset = self.policies[indices, :]
         game_results_subset = self.game_results[indices]
@@ -122,5 +124,5 @@ class ExperienceReplay():
 
     def checkpoint(self, filename):
         np.savez(filename, inputs=self.inputs, policies=self.policies,
-                 game_results=self.game_results,
+                 game_results=self.game_results, pointer=self.pointer,
                  search_values=self.search_values)

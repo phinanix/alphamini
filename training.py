@@ -4,8 +4,6 @@ import agent
 import params as p
 import experience_replay as exp_rp
 
-#from keras.models import save_weights, load_weights
-
 '''
 Manages the main training loop.
 Instantiates the network on creation
@@ -27,10 +25,11 @@ class Training():
         if network_filename:
             self.main_network.model.load_weights(network_filename)
         self.training_cycles = 0
+    
+        self.experience_replay = exp_rp.ExperienceReplay(
+            self.board_size, p.hist_size, p.replay_length,
+            checkpoint_filename=exp_rp_filename)
         
-        self.experience_replay = exp_rp.ExperienceReplay(self.board_size,
-                                                         p.hist_size,
-                                                         p.replay_length)
         self.self_play_cycles = 0
         
         self.best_agent = agent.Agent(self.main_network)
@@ -66,14 +65,16 @@ class Training():
             self.experience_replay.checkpoint(filename)
             
     #TODO: decide whether to implement tournament
-    def self_train(self, filename, num_positions=1024, batch_size=32):
+    def self_train(self, filename, num_positions=1024, batch_size=32,
+                   logfile='train_log.csv'):
         data = self.experience_replay.select(num_positions)
-        self.main_network.update(data, batch_size=batch_size, verbose=1)
+        self.main_network.update(data, batch_size=batch_size, verbose=1,
+                                 logfile=logfile)
         self.training_cycles += 1
         if self.training_cycles % p.save_network_every == 0:
             self.main_network.checkpoint(filename)
 
-    def training_loop(self, stub_exp_rp_name, stub_network_name,
+    def training_loop(self, stub_exp_rp_name, stub_network_name, stub_train_log,
                       rounds=3, games_per_round=100, positions_per_round=1024):
         for r in range(rounds):
             print("round:", r)
@@ -81,4 +82,5 @@ class Training():
                            stub_exp_rp_name+"_round_"+str(r),
                            playouts=p.playouts)
             self.self_train(stub_network_name+"_round_"+str(r),
-                            num_positions=positions_per_round)
+                            num_positions=positions_per_round,
+                            logfile=stub_train_log+"_round_"+str(r))

@@ -18,5 +18,5 @@ komi = 4.5
 replay_length = 10**4
 save_network_every = 1 #training cycles
 save_replay_every  = 1 #self play cycles
-playouts = 30
+playouts = 15
 temp = 1

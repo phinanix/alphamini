@@ -48,12 +48,13 @@ class GoGame():
     '''
     def __neighbors(self, i, j):
         candidates = [(i,j-1), (i,j+1), (i-1,j), (i+1,j)]
-        out = []
+        return [(x,y) for x,y in candidates if self.__in_bounds(x,y)]
+        '''out = []
         for x,y in candidates:
             if self.__in_bounds(x,y):
                 out.append( (x,y) )
-        return out
-
+        return out'''
+    
     def __neighbors_of_group(self, group_list):
         group_set = set(group_list)
         candidates = set()
@@ -76,7 +77,7 @@ class GoGame():
         return any( (self.__check_square(board, i, j, color)
                      for i,j in square_list) )
     def __is_empty(self, board, i, j):
-        return self.__check_square(board, i, j, -1)
+            return board[i,j,0]==0 and board[i,j,1]==0
     
     '''takes a board, an intersection, and a color
     returns a list of tuples of intersections containing all squares that 
@@ -101,11 +102,12 @@ class GoGame():
     '''takes a sxsx2 array an intersection and a color
     counts the liberties of the group which the stone at i,j is part of
     returns -1 if the space is empty'''
-    def __liberties(self, board, i, j, color, verbose=False):
+    def __liberties(self, board, i, j, color):
         if board[i,j,color]==0:
-            return -1
+            #modified from -1 to true
+            return True
         neighbors = self.__neighbors_of_group(self.__group(board,i,j,color))
-        return sum( 1 for x,y in neighbors if self.__is_empty(board,x,y))
+        return any( self.__is_empty(board,x,y) for x,y in neighbors )
 
     def can_reach(self, board, i, j, color, color_to_reach):
         neighbors = self.__neighbors_of_group(self.__group(board,i,j,color))
@@ -119,7 +121,7 @@ class GoGame():
         new_board = np.copy(board)
         for i in range(self.size):
             for j in range(self.size):
-                if self.__liberties(new_board,i,j, color, verbose=verbose) == 0:
+                if self.__liberties(new_board,i,j,color) == False:
                     if verbose:
                         print("capturing group at:", i, j, "color:", color)
                     for point in self.__group(new_board, i, j, color):

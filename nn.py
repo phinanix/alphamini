@@ -3,6 +3,7 @@ import numpy as np
 from keras.models import Model
 from keras.layers import (Input, Conv2D, BatchNormalization, Dense,
                           Activation,Add,Flatten)
+from keras.callbacks import CSVLogger
 from keras.activations import relu
 import go
 
@@ -42,11 +43,12 @@ class Network():
             intermediate = Res_Block(residual_filters, intermediate)
         policy = Conv_Norm_relu(policy_filters, intermediate)
         policy = Flatten()(policy)
-        policy_out = Dense(board_size**2+1, activation="sigmoid")(policy)
+        policy_out = Dense(board_size**2+1, activation="sigmoid",
+                           name="policy")(policy)
         value = Conv_Norm_relu(value_filters, intermediate)
         value = Flatten()(value)
         value = Dense(value_hidden, activation="relu")(value)
-        value_out = Dense(1, activation="tanh")(value)
+        value_out = Dense(1, activation="tanh", name="value")(value)
         self.model = Model(inputs=inputs, outputs=[policy_out, value_out])
         self.model.compile(optimizer="sgd",
                            loss=["binary_crossentropy","mean_squared_error"])
@@ -77,13 +79,14 @@ class Network():
     game boards, policy targets, value targets,
     in that order, and trains for one epoch on them
     '''
-    def update(self, data, batch_size=32, verbose=0):
+    def update(self, data, batch_size=32, verbose=0, logfile='train_log.csv'):
         inputs, policies, values = data
         #print("inputs:\n", inputs)
         #print("policies:\n", policies)
         #print("values:\n", values)
+        csv_logger = CSVLogger(logfile, append=True)
         self.model.fit(inputs, [policies, values], batch_size=batch_size,
-                       verbose=verbose)
+                       verbose=verbose, callbacks=[csv_logger])
 
     def checkpoint(self, filename):
         self.model.save_weights(filename)
