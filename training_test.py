@@ -18,5 +18,5 @@ class TestTraining():
                                   exp_rp_filename="test_load_exp_rp.npz")
         train.training_loop('ER_load_test', 'network_load_test',
                             "train_log_file",
-                            rounds=3, games_per_round=5,
-                            positions_per_round=128)
+                            rounds=5, games_per_round=5,
+                            positions_per_round=512)

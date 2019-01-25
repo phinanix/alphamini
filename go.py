@@ -54,7 +54,7 @@ class GoGame():
             if self.__in_bounds(x,y):
                 out.append( (x,y) )
         return out'''
-    
+
     def __neighbors_of_group(self, group_list):
         group_set = set(group_list)
         candidates = set()
@@ -73,9 +73,11 @@ class GoGame():
         else:
             #check if square contains the given color
             return board[i,j,color] == 1
+
     def __check_squares(self, board, square_list, color):
         return any( (self.__check_square(board, i, j, color)
                      for i,j in square_list) )
+
     def __is_empty(self, board, i, j):
             return board[i,j,0]==0 and board[i,j,1]==0
     
@@ -186,6 +188,7 @@ class GoGame():
                 print('move is ko')
             return False
         return True
+    
 
     def is_over(self):
         return self.game_over
