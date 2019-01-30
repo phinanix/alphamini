@@ -328,7 +328,7 @@ class GoGame():
         else:
             return -1
         
-    def __print_board(self, board):
+    def print_board(self, board):
         out = []
         for i in range(self.size):
             for j in range(self.size):
@@ -343,7 +343,7 @@ class GoGame():
         return ''.join(out)
         
     def get_board_str(self):
-           return self.__print_board(self.board)
+           return self.print_board(self.board)
     def get_history_str(self):
         out = []
         for i in range(0, self.hist_size*2, 2):

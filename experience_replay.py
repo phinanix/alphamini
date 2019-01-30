@@ -87,7 +87,33 @@ class ExperienceReplay():
             self.pointer = np.zeros(1, dtype=np.int32)
         self.full = False
 
-    def save(self, board_input, policy, game_result, search_result):
+    ''' Takes in a given board (that may be 2D or 3D) and returns the 8 
+    dihedral permutations of that board in a list
+    Note: Axis 0,1 must be the x,y dimensions of the board
+    Axis 2 is the "depth" and is not changed.
+    '''
+    def permute_board(self, board):
+        out = [board]
+        cur = board
+        #get all rotations of the board
+        for _ in range(3):
+            cur = np.rot90(cur)
+            out.append(cur)
+        #flip board vertically
+        cur = np.flipud(cur)
+        out.append(cur)
+        for _ in range(3):
+            cur = np.rot90(cur)
+            out.append(cur)
+        return out
+
+    def save(self, board_input, policy_input, game_result, search_result):
+        boards = self.permute_board(board_input)
+        policies = self.permute_board(policy_input)
+        for board,policy in zip(boards, policies):
+            self.save_one(board,policy,game_result,search_result)
+            
+    def save_one(self, board_input, policy, game_result, search_result):
         self.inputs[self.pointer[0]] = board_input
         self.policies[self.pointer[0]] = policy
         self.game_results[self.pointer[0]] = game_result

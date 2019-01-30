@@ -41,7 +41,7 @@ class Training():
         game = go.GoGame(self.board_size, p.hist_size, p.komi)
         replay = exp_rp.GameReplay(self.board_size, p.hist_size)
         while not game.is_over():
-            #print("Turn:", game.turn)
+            print("Turn:", game.turn)
             #print("Board:\n", game.get_board_str())
             if game.cur_player==0:
                agent = agent_0

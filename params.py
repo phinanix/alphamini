@@ -15,7 +15,7 @@ hist_size = 8
 komi = 4.5
 
 #training parameters
-replay_length = 10**4
+replay_length = 10**5
 save_network_every = 1 #training cycles
 save_replay_every  = 1 #self play cycles
 playouts = 25
