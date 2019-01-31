@@ -1,19 +1,20 @@
 import numpy as np
 #import keras
-from keras.models import Model
-from keras.layers import (Input, Conv2D, BatchNormalization, Dense,
-                          Activation,Add,Flatten)
-from keras.callbacks import CSVLogger
-from keras.activations import relu
 import go
 
 def Conv_Norm(filters, inputs):
+    from keras.layers import (Input, Conv2D, BatchNormalization, Dense,
+                              Activation,Add,Flatten)
     return BatchNormalization()(Conv2D(filters, (3,3), padding='same')(inputs))
 
 def Conv_Norm_relu(filters, inputs):
+    from keras.layers import (Input, Conv2D, BatchNormalization, Dense,
+                              Activation,Add,Flatten)    
     return Activation('relu')(Conv_Norm(filters, inputs))
 
 def Res_Block(filters, inputs):
+    from keras.layers import (Input, Conv2D, BatchNormalization, Dense,
+                              Activation,Add,Flatten)
     intermediate = Conv_Norm_relu(filters, Conv_Norm_relu(filters, inputs))
     return Activation('relu')(Add()([inputs,intermediate]))
 
@@ -31,6 +32,16 @@ class Network():
     def __init__(self, board_size, hist_size,
                  residual_filters, residual_blocks,
                  policy_filters, value_filters, value_hidden):
+        #for multithreading or something?
+        from keras.models import Model
+        from keras.layers import (Input, Conv2D, BatchNormalization, Dense,
+                                  Activation,Add,Flatten)
+        from keras.activations import relu
+        import keras.backend as K
+        import tensorflow as tf
+        print("before set session")
+        K.set_session(tf.Session())
+        print('after set session')
         #maybe take a number of layers and a network type or something?
         self.board_size=board_size
         self.hist_size = hist_size
@@ -54,7 +65,16 @@ class Network():
                            loss=["binary_crossentropy","mean_squared_error"])
         #self.model.summary()
                            
-        
+    def copy(self):
+        from keras.models import clone_model
+        new_model = clone_model(self.model)
+        new_network = Network(self.board_size, self.hist_size, 1,1,1,1,1)
+        new_network.set_model(new_model)
+        return new_network
+    
+    def set_model(self, model):
+        self.model=model
+
     '''takes as input a board of sizexsizex(2*hist_size)
     returns a tuple p,v with p an array of sizexsize that contains the logarithms
     of probabilities of selecting moves
@@ -80,6 +100,8 @@ class Network():
     in that order, and trains for one epoch on them
     '''
     def update(self, data, batch_size=32, verbose=0, logfile='train_log.csv'):
+        from keras.callbacks import CSVLogger
+
         inputs, policies, values = data
         #print("inputs:\n", inputs)
         #print("policies:\n", policies)

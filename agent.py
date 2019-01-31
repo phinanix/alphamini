@@ -4,7 +4,10 @@ class Agent():
     def __init__(self, network):
         self.network = network
         self.search_tree = None
-        
+
+    def copy(self):
+        return Agent(self.network.copy())
+    
     #TODO: tree retention (currently broken)
     def move(self, state, temp, retain_tree=False, playouts=100,
              save=False, replay=None):

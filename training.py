@@ -1,3 +1,6 @@
+import multiprocessing as mp
+from itertools import repeat
+
 import go
 import nn
 import agent
@@ -14,6 +17,42 @@ creates checkpoints in training and
 evaluates different versions of the network 
 to ensure that progress is being made
 '''
+ 
+def parallel_play(board_size, agent_0, agent_1, temp,
+         retain_tree=False, playouts=100, save=False, exp_replay=None):
+    game = go.GoGame(board_size, p.hist_size, p.komi)
+    replay = exp_rp.GameReplay(board_size, p.hist_size)
+    while not game.is_over():
+        #print("Turn:", game.turn)
+        #print("Board:\n" + game.get_board_str())
+        if game.cur_player==0:
+           agent = agent_0
+        else:
+           agent = agent_1
+        x,y = agent.move(game, temp,
+                         retain_tree=retain_tree, playouts=playouts,
+                         save=True, replay=replay)
+        result = game.unsafe_move(x,y, error=True)
+    replay.transfer(exp_replay, game.result())
+
+def parallel_play_many(num_games, temp, board_size, agent,
+                       save, exp_rp, playouts=100):
+    print('first lol')
+    '''network = nn.Network(board_size, p.hist_size, p.residual_filters,
+                         p.residual_blocks, p.policy_filters, p.value_filters,
+                         p.value_hidden)
+    print('second xd')
+    print("loading:", agent_file)
+    network.model.load_weights(agent_file)
+    print('text.jpg')
+    agent = agent.Agent(network)'''
+    for _ in range(num_games):
+        print("game:", _)
+        parallel_play(board_size, agent, agent, temp,
+                      save=save, exp_replay=exp_rp,
+                      playouts=playouts)
+
+
 
 class Training():
     def __init__(self, board_size, network_filename=None, exp_rp_filename=None):
@@ -41,8 +80,8 @@ class Training():
         game = go.GoGame(self.board_size, p.hist_size, p.komi)
         replay = exp_rp.GameReplay(self.board_size, p.hist_size)
         while not game.is_over():
-            print("Turn:", game.turn)
-            #print("Board:\n", game.get_board_str())
+            #print("Turn:", game.turn)
+            #print("Board:\n" + game.get_board_str())
             if game.cur_player==0:
                agent = agent_0
             else:
@@ -50,16 +89,53 @@ class Training():
             x,y = agent.move(game, temp,
                              retain_tree=retain_tree, playouts=playouts,
                              save=True, replay=replay)
-            game.move(x,y, error=False)
-            
+            result = game.unsafe_move(x,y, error=True)
         replay.transfer(exp_replay, game.result())
             
     def self_play(self, num_games, temp, filename, save=True, playouts=100):
         for _ in range(num_games):
             print("game:", _)
             self.play(self.best_agent, self.best_agent, temp,
-                      save=save, exp_replay=self.experience_replay)
+                      save=save, exp_replay=self.experience_replay,
+                      playouts=playouts)
             
+        self.self_play_cycles += 1
+        if self.self_play_cycles%p.save_replay_every == 0:
+            self.experience_replay.checkpoint(filename)
+
+    def parallel_self_play(self, num_games, num_processes, temp, filename,
+                           save=True, playouts=100):
+        games_per = num_games // num_processes
+        pool = mp.Pool(num_processes)
+        exp_rps = [exp_rp.ExperienceReplay(self.board_size, p.hist_size,
+                                           p.replay_length//10)
+                   for _ in range(num_processes)]
+        #exp_rps = [None for _ in range(num_processes)]
+        agent_file = "garblegabble"
+        files = [agent_file+str(i) for i in range(num_processes)]
+        for filename in files:
+            self.best_agent.network.checkpoint(filename)
+
+
+        '''agents = [agent.Agent(nn.Network(self.board_size, p.hist_size,
+                                         p.residual_filters, p.residual_blocks,
+                                         p.policy_filters, p.value_filters,
+                                         p.value_hidden))
+                  for _ in range(num_processes)]
+        for agent_update in agents:
+            agent_update.network.model.load_weights("garblegabble")'''
+
+        self.best_agent.network.model._make_predict_function() 
+        args = zip(repeat(games_per), repeat(temp), repeat(self.board_size),
+                   repeat(self.best_agent), repeat(save), exp_rps,
+                   repeat(playouts))
+        print("the before time")
+        #list(args)
+        ers = pool.starmap(parallel_play_many,  args)
+        print('the after time')
+        for replay in ers:
+            self.experience_replay.merge(replay)
+
         self.self_play_cycles += 1
         if self.self_play_cycles%p.save_replay_every == 0:
             self.experience_replay.checkpoint(filename)
@@ -73,8 +149,8 @@ class Training():
         self.training_cycles += 1
         if self.training_cycles % p.save_network_every == 0:
             self.main_network.checkpoint(filename)
-
-    def training_loop(self, stub_exp_rp_name, stub_network_name, stub_train_log,
+            
+    def training_loop(self, stub_exp_rp_name, stub_network_name, train_log,
                       rounds=3, games_per_round=100, positions_per_round=1024):
         for r in range(rounds):
             print("round:", r)
@@ -83,4 +159,16 @@ class Training():
                            playouts=p.playouts)
             self.self_train(stub_network_name+"_round_"+str(r),
                             num_positions=positions_per_round,
-                            logfile=stub_train_log+"_round_"+str(r))
+                            logfile=train_log)
+
+    def parallel_loop(self, stub_exp_rp_name, stub_network_name, train_log,
+                      rounds=3, games_per_round=100, positions_per_round=1024,
+                      processes=2):
+        for r in range(rounds):
+            print("round:", r)
+            self.parallel_self_play(games_per_round, processes, p.temp,
+                                    stub_exp_rp_name+"_round_"+str(r),
+                                    playouts=p.playouts)
+            self.self_train(stub_network_name+"_round_"+str(r),
+                            num_positions=positions_per_round,
+                            logfile=train_log)

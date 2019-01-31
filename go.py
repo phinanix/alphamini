@@ -199,12 +199,21 @@ class GoGame():
     error parameter controls verbosity
 
     (-1, -1) is a pass, which is always legal and does not change the board state
-    '''
-    def move(self, x, y, error=False, score_callback=None):
+    '''    
+    def move(self, x,y, error=False, score_callback=None):
         if self.is_over():
             if error:
                 print('game is over')
             return False
+        #check legality
+        if not self.is_legal(self.board,x,y,self.cur_player,error=error):
+            return False
+        return self.unsafe_move(x,y,error=error,score_callback=score_callback)
+    
+    '''makes a move for the current player at (x,y)
+    does not check legality of move - this could cause bugs !!
+    '''
+    def unsafe_move(self, x, y, error=False, score_callback=None):
         
         if x == -1 and y == -1:
             
@@ -227,10 +236,7 @@ class GoGame():
                     score_callback(self.score())
             #success!
             return True
-            
-        #check legality
-        if not self.is_legal(self.board,x,y,self.cur_player,error=error):
-            return False
+
         #update history
         self.board[:,:,2:] = self.board[:,:,:-2]
         #last 2 boards are now duplicated
@@ -248,6 +254,7 @@ class GoGame():
         #update turn and player
         self.cur_player = (self.cur_player + 1) % 2
         self.turn += 1
+    
         if self.turn > self.turn_limit:
             if error:
                 print('game ended on turns')

@@ -10,7 +10,7 @@ value_filters = 8
 value_hidden = 256
 
 #size of history that's input to the network
-board_size = 9
+board_size = 5
 hist_size = 8
 komi = 4.5
 

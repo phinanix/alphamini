@@ -70,6 +70,7 @@ class ExperienceReplay():
     def __init__(self, board_size, game_hist_size, exp_replay_size,
                  checkpoint_filename=None):
         self.size = exp_replay_size
+        self.board_size = board_size
         
         if checkpoint_filename:
             npzfile=np.load(checkpoint_filename)
@@ -87,6 +88,18 @@ class ExperienceReplay():
             self.pointer = np.zeros(1, dtype=np.int32)
         self.full = False
 
+
+    def permute_policy(self, policy):
+        pass_prob = policy[0]
+        board_probs = policy[1:].reshape( (self.board_size, self.board_size) )
+        board_perms = self.permute_board(board_probs)
+        out = [np.empty( (self.board_size**2+1) ) for _ in board_perms]
+        for arr,board in zip(out, board_perms):
+            arr[0] = pass_prob
+            arr[1:] = board.reshape(self.board_size**2)
+        #print("Policy Perms:\n" + str(out))
+        return out
+    
     ''' Takes in a given board (that may be 2D or 3D) and returns the 8 
     dihedral permutations of that board in a list
     Note: Axis 0,1 must be the x,y dimensions of the board
@@ -97,6 +110,8 @@ class ExperienceReplay():
         cur = board
         #get all rotations of the board
         for _ in range(3):
+            #print("size", board.shape, "board:")
+            #print(board)
             cur = np.rot90(cur)
             out.append(cur)
         #flip board vertically
@@ -109,7 +124,7 @@ class ExperienceReplay():
 
     def save(self, board_input, policy_input, game_result, search_result):
         boards = self.permute_board(board_input)
-        policies = self.permute_board(policy_input)
+        policies = self.permute_policy(policy_input)
         for board,policy in zip(boards, policies):
             self.save_one(board,policy,game_result,search_result)
             
@@ -123,10 +138,12 @@ class ExperienceReplay():
         if self.pointer[0]==0:
             #we've wrapped around
             self.full=True
+    def maximum_index(self):
+        return self.exp_replay_size if self.full else self.pointer[0]
 
     #TODO: configure averaging z and w
     def select(self, num_values):
-        maximum_index = self.exp_replay_size if self.full else self.pointer[0]
+        maximum_index = self.maximum_index()
         print("maximum_index:",maximum_index,"num_values", num_values)
         if maximum_index > num_values*1.1:
             #we can pick randomly
@@ -148,7 +165,18 @@ class ExperienceReplay():
 
         return input_subset, policies_subset, values_subset
 
+    def select_one(self, index):
+        input_board = self.inputs[index, :, :, :]
+        policy = self.policies[index, :]
+        game_result = self.game_results[index]
+        search_value = self.search_values[index]
+        return input_board, policy, game_result, search_value
+        
     def checkpoint(self, filename):
         np.savez(filename, inputs=self.inputs, policies=self.policies,
                  game_results=self.game_results, pointer=self.pointer,
                  search_values=self.search_values)
+
+    def merge(self, other_ER):
+        for i in range(other_ER.maximum_index()):
+            self.save(*other_ER.select_one(i))
