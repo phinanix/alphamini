@@ -37,21 +37,14 @@ def parallel_play(board_size, agent_0, agent_1, temp,
 
 def parallel_play_many(num_games, temp, board_size, agent,
                        save, exp_rp, playouts=100):
-    print('first lol')
-    '''network = nn.Network(board_size, p.hist_size, p.residual_filters,
-                         p.residual_blocks, p.policy_filters, p.value_filters,
-                         p.value_hidden)
-    print('second xd')
-    print("loading:", agent_file)
-    network.model.load_weights(agent_file)
-    print('text.jpg')
-    agent = agent.Agent(network)'''
+    import os
+    print('hello from process id:', os.getpid())
     for _ in range(num_games):
         print("game:", _)
         parallel_play(board_size, agent, agent, temp,
                       save=save, exp_replay=exp_rp,
                       playouts=playouts)
-
+    return exp_rp
 
 
 class Training():
@@ -110,27 +103,12 @@ class Training():
         exp_rps = [exp_rp.ExperienceReplay(self.board_size, p.hist_size,
                                            p.replay_length//10)
                    for _ in range(num_processes)]
-        #exp_rps = [None for _ in range(num_processes)]
-        agent_file = "garblegabble"
-        files = [agent_file+str(i) for i in range(num_processes)]
-        for filename in files:
-            self.best_agent.network.checkpoint(filename)
 
-
-        '''agents = [agent.Agent(nn.Network(self.board_size, p.hist_size,
-                                         p.residual_filters, p.residual_blocks,
-                                         p.policy_filters, p.value_filters,
-                                         p.value_hidden))
-                  for _ in range(num_processes)]
-        for agent_update in agents:
-            agent_update.network.model.load_weights("garblegabble")'''
-
-        self.best_agent.network.model._make_predict_function() 
+        #self.best_agent.network.model._make_predict_function() 
         args = zip(repeat(games_per), repeat(temp), repeat(self.board_size),
                    repeat(self.best_agent), repeat(save), exp_rps,
                    repeat(playouts))
         print("the before time")
-        #list(args)
         ers = pool.starmap(parallel_play_many,  args)
         print('the after time')
         for replay in ers:

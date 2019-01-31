@@ -39,9 +39,9 @@ class Network():
         from keras.activations import relu
         import keras.backend as K
         import tensorflow as tf
-        print("before set session")
-        K.set_session(tf.Session())
-        print('after set session')
+        #print("before set session")
+        #K.set_session(tf.Session())
+        #print('after set session')
         #maybe take a number of layers and a network type or something?
         self.board_size=board_size
         self.hist_size = hist_size
