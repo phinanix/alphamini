@@ -20,3 +20,6 @@ save_network_every = 1 #training cycles
 save_replay_every  = 1 #self play cycles
 playouts = 25
 temp = 1
+
+#used only if parallel
+#processes = 2 #not currently used

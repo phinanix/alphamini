@@ -7,6 +7,13 @@ import agent
 import params as p
 import experience_replay as exp_rp
 
+import os
+os.environ['MKL_NUM_THREADS'] = '4'
+os.environ['GOTO_NUM_THREADS'] = '4'
+os.environ['OMP_NUM_THREADS'] = '4'
+os.environ['openmp'] = 'True'
+
+
 '''
 Manages the main training loop.
 Instantiates the network on creation
@@ -93,7 +100,7 @@ class Training():
                       playouts=playouts)
             
         self.self_play_cycles += 1
-        if self.self_play_cycles%p.save_replay_every == 0:
+        if self.self_play_cycles%p.save_replay_every == 0 or save:
             self.experience_replay.checkpoint(filename)
 
     def parallel_self_play(self, num_games, num_processes, temp, filename,
@@ -109,8 +116,11 @@ class Training():
                    repeat(self.best_agent), repeat(save), exp_rps,
                    repeat(playouts))
         print("the before time")
+
         ers = pool.starmap(parallel_play_many,  args)
         print('the after time')
+        print('len ers:', len(ers))
+        print(er.maximum_index() for er in ers)
         for replay in ers:
             self.experience_replay.merge(replay)
 
@@ -119,13 +129,13 @@ class Training():
             self.experience_replay.checkpoint(filename)
             
     #TODO: decide whether to implement tournament
-    def self_train(self, filename, num_positions=1024, batch_size=32,
+    def self_train(self, filename, num_positions=1024, batch_size=32,save=True,
                    logfile='train_log.csv'):
         data = self.experience_replay.select(num_positions)
         self.main_network.update(data, batch_size=batch_size, verbose=1,
                                  logfile=logfile)
         self.training_cycles += 1
-        if self.training_cycles % p.save_network_every == 0:
+        if self.training_cycles % p.save_network_every == 0 or save:
             self.main_network.checkpoint(filename)
             
     def training_loop(self, stub_exp_rp_name, stub_network_name, train_log,
@@ -138,6 +148,7 @@ class Training():
             self.self_train(stub_network_name+"_round_"+str(r),
                             num_positions=positions_per_round,
                             logfile=train_log)
+        return self.experience_replay.maximum_index()            
 
     def parallel_loop(self, stub_exp_rp_name, stub_network_name, train_log,
                       rounds=3, games_per_round=100, positions_per_round=1024,
@@ -150,3 +161,4 @@ class Training():
             self.self_train(stub_network_name+"_round_"+str(r),
                             num_positions=positions_per_round,
                             logfile=train_log)
+        return self.experience_replay.maximum_index()

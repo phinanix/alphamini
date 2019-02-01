@@ -9,14 +9,17 @@ class TestTraining():
         
     def test_train_loop(self):
         train = self.ze_setup(p.board_size)
-        train.training_loop('test_exp_rp','test_network',"train_log_file",
-                            rounds=3, games_per_round=5, positions_per_round=64)
+        return train.training_loop('test_exp_rp','test_network',
+                                   'test_train_log_file',
+                                   rounds=2, games_per_round=4,
+                                   positions_per_round=1024)
 
     def test_parallel_loop(self):
         train = self.ze_setup(p.board_size)
-        train.parallel_loop('para_exp_rp','para_network',"para_log_file",
-                            rounds=2, games_per_round=6, positions_per_round=64,
-                            processes=2)
+        return train.parallel_loop('para_exp_rp','para_network',"para_log_file",
+                                   rounds=2, games_per_round=10,
+                                   positions_per_round=64,
+                                   processes=4)
         
     def test_loading(self):
         train = training.Training(p.board_size,
