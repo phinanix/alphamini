@@ -1,6 +1,8 @@
 import numpy as np
 #import keras
 import go
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 def Conv_Norm(filters, inputs):
     from keras.layers import (Input, Conv2D, BatchNormalization, Dense,

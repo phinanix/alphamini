@@ -12,6 +12,9 @@ os.environ['MKL_NUM_THREADS'] = '4'
 os.environ['GOTO_NUM_THREADS'] = '4'
 os.environ['OMP_NUM_THREADS'] = '4'
 os.environ['openmp'] = 'True'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import tensorflow as tf
+
 
 
 '''
@@ -89,18 +92,19 @@ class Training():
             x,y = agent.move(game, temp,
                              retain_tree=retain_tree, playouts=playouts,
                              save=True, replay=replay)
-            result = game.unsafe_move(x,y, error=True)
+            result = game.unsafe_move(x,y, error=False)
         replay.transfer(exp_replay, game.result())
             
     def self_play(self, num_games, temp, filename, save=True, playouts=100):
         for _ in range(num_games):
-            print("game:", _)
+            #print("game:", _)
             self.play(self.best_agent, self.best_agent, temp,
                       save=save, exp_replay=self.experience_replay,
                       playouts=playouts)
             
         self.self_play_cycles += 1
         if self.self_play_cycles%p.save_replay_every == 0 or save:
+            print("saving to:", filename)
             self.experience_replay.checkpoint(filename)
 
     def parallel_self_play(self, num_games, num_processes, temp, filename,
