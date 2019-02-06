@@ -179,4 +179,4 @@ class ExperienceReplay():
 
     def merge(self, other_ER):
         for i in range(other_ER.maximum_index()):
-            self.save_one(*other_ER.select_one(i))
+            self.save_one(other_ER.select_one(i))
